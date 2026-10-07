@@ -319,6 +319,17 @@ windowrulev2 = float, title:^(pdfind)$
 
 ### Installing
 
+**Omarchy** — one script does all of it (packages, pipx install, daemon,
+hourly re-index, `SUPER ALT D` hotkey, first index), and is safe to re-run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Shu-AFK/pdfind/main/scripts/install-omarchy.sh | bash
+# or from a checkout: ./scripts/install-omarchy.sh
+```
+
+`PDFIND_KEY="SUPER + SHIFT + F"` picks a different hotkey;
+`PDFIND_NO_INDEX=1` skips the first (slow) index.
+
 **Arch (AUR)** — pulls in everything, including the optional bits as
 `optdepends`:
 
