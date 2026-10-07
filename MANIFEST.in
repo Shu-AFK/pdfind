@@ -1,0 +1,3 @@
+include LICENSE README.md
+recursive-include scripts *.service *.timer *.plist
+recursive-include packaging *

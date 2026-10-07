@@ -1,0 +1,136 @@
+# Same shape as bm's release workflow: push a v*.*.* tag, everything else is
+# automatic. goreleaser is not used here — its `builds:` section cross-compiles
+# Go binaries, and pdfind is pure Python (arch=any, one wheel for every
+# platform), so there is nothing to cross-compile. These jobs do the parts of
+# goreleaser that still apply: GitHub release, PyPI, AUR, Homebrew tap.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag matches pyproject version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag $tag does not match pyproject version $version"
+            exit 1
+          fi
+
+      - run: pipx run build
+
+      - run: pipx run twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  github-release:
+    name: GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write        # trusted publishing — no API token to rotate
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  aur:
+    name: Publish to AUR
+    needs: github-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pin pkgver and checksum to the released tarball
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
+          # The release tarball only exists once the release job has run.
+          for i in 1 2 3 4 5; do
+            curl -sSfL "$url" -o src.tar.gz && break || sleep 15
+          done
+          sum=$(sha256sum src.tar.gz | cut -d' ' -f1)
+          sed -i "s/^pkgver=.*/pkgver=${version}/" packaging/aur/PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" packaging/aur/PKGBUILD
+          sed -i "s/^sha256sums=.*/sha256sums=('${sum}')/" packaging/aur/PKGBUILD
+          cat packaging/aur/PKGBUILD
+
+      - uses: KSXGitHub/github-actions-deploy-aur@v4
+        with:
+          pkgname: pdfind
+          pkgbuild: packaging/aur/PKGBUILD
+          commit_username: "CI Bot"
+          commit_email: "pdfind-release-bot@users.noreply.github.com"
+          ssh_private_key: ${{ secrets.AUR_KEY }}
+          commit_message: "pdfind ${{ github.ref_name }}"
+          updpkgsums: false        # already pinned above
+          test: false              # no makepkg here: python-fastembed is AUR-only
+
+  homebrew:
+    name: Update Homebrew tap
+    needs: github-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Point the formula at the new tarball
+        run: |
+          url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
+          for i in 1 2 3 4 5; do
+            curl -sSfL "$url" -o src.tar.gz && break || sleep 15
+          done
+          sum=$(sha256sum src.tar.gz | cut -d' ' -f1)
+          sed -i "s|  url \".*\"|  url \"${url}\"|" packaging/homebrew/pdfind.rb
+          sed -i "s|  sha256 \".*\"|  sha256 \"${sum}\"|" packaging/homebrew/pdfind.rb
+
+      - name: Push to Shu-AFK/homebrew-tap
+        env:
+          GH_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/Shu-AFK/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          cp packaging/homebrew/pdfind.rb tap/Formula/pdfind.rb
+          cd tap
+          git config user.name "CI Bot"
+          git config user.email "pdfind-release-bot@users.noreply.github.com"
+          git add Formula/pdfind.rb
+          git diff --cached --quiet || git commit -m "pdfind ${GITHUB_REF_NAME}"
+          git push

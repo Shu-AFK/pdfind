@@ -1,0 +1,48 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Packaging / editable-install metadata
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+
+# AUR build leftovers. Scoped to where makepkg creates them — a bare `src/`
+# would silently swallow a future source directory.
+*.pkg.tar.zst
+*.pkg.tar.xz
+packaging/aur/src/
+packaging/aur/pkg/
+packaging/aur/*.tar.gz
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# pdfind's own state lives outside the repo by design — the index in
+# ~/.local/share/pdfind, config in ~/.config/pdfind, model and page renders in
+# ~/.cache. These patterns only catch copies made while debugging.
+*.f32
+index.db
+index.db-wal
+index.db-shm
+previews/

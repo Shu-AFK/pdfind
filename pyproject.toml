@@ -1,0 +1,51 @@
+[project]
+name = "pdfind"
+version = "0.1.0"
+description = "Find documents by describing what is written in them — local semantic search for PDFs and notes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Floyd Göttsch", email = "floyd.goettsch1@gmail.com" }]
+keywords = ["search", "semantic-search", "pdf", "embeddings", "cli", "wayland"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Desktop Environment :: File Managers",
+    "Topic :: Text Processing :: Indexing",
+]
+
+dependencies = [
+    "fastembed>=0.4",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# The search-bar window. PyGObject normally comes from the system package
+# manager (python-gobject / python3-gi / pygobject3) rather than pip, because
+# building it from source needs the GTK4 development headers.
+bar = ["PyGObject>=3.44"]
+
+[project.urls]
+Homepage = "https://github.com/Shu-AFK/pdfind"
+Repository = "https://github.com/Shu-AFK/pdfind"
+Issues = "https://github.com/Shu-AFK/pdfind/issues"
+
+[project.scripts]
+pdfind = "pdfind.cli:main"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["pdfind"]

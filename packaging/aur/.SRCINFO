@@ -1,0 +1,27 @@
+pkgbase = pdfind
+	pkgdesc = Find documents by describing what is written in them — local semantic search for PDFs and notes
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://github.com/Shu-AFK/pdfind
+	arch = any
+	license = MIT
+	makedepends = python-build
+	makedepends = python-installer
+	makedepends = python-setuptools
+	makedepends = python-wheel
+	depends = python
+	depends = python-numpy
+	depends = python-fastembed
+	depends = poppler
+	optdepends = python-gobject: search bar window (pdfind bar)
+	optdepends = gtk4: search bar window
+	optdepends = gtk4-layer-shell: overlay search bar on wlroots compositors
+	optdepends = tesseract: OCR for scanned PDFs (ocr = true)
+	optdepends = tesseract-data-eng: English OCR data
+	optdepends = fzf: terminal result picker (pdfind pick)
+	optdepends = zathura: opens PDFs at the matching page
+	optdepends = walker: fallback two-step picker (pdfind menu)
+	source = pdfind-0.1.0.tar.gz::https://github.com/Shu-AFK/pdfind/archive/refs/tags/v0.1.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = pdfind

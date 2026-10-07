@@ -1,0 +1,49 @@
+# Maintainer: Floyd Göttsch <floyd.goettsch1@gmail.com>
+pkgname=pdfind
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Find documents by describing what is written in them — local semantic search for PDFs and notes"
+arch=('any')
+url="https://github.com/Shu-AFK/pdfind"
+license=('MIT')
+depends=(
+  'python'
+  'python-numpy'
+  'python-fastembed'   # AUR
+  'poppler'            # pdftotext, pdftoppm
+)
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+optdepends=(
+  'python-gobject: search bar window (pdfind bar)'
+  'gtk4: search bar window'
+  'gtk4-layer-shell: overlay search bar on wlroots compositors'
+  'tesseract: OCR for scanned PDFs (ocr = true)'
+  'tesseract-data-eng: English OCR data'
+  'fzf: terminal result picker (pdfind pick)'
+  'zathura: opens PDFs at the matching page'
+  'walker: fallback two-step picker (pdfind menu)'
+)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  # systemd user units: the daemon keeps the model resident, the timer keeps
+  # the index current. Neither is enabled automatically.
+  install -Dm644 scripts/pdfind.service \
+    "$pkgdir/usr/lib/systemd/user/pdfind.service"
+  install -Dm644 scripts/pdfind-index.service \
+    "$pkgdir/usr/lib/systemd/user/pdfind-index.service"
+  install -Dm644 scripts/pdfind-index.timer \
+    "$pkgdir/usr/lib/systemd/user/pdfind-index.timer"
+}

@@ -1,0 +1,13 @@
+[Unit]
+Description=pdfind semantic search daemon
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/pdfind serve
+Restart=on-failure
+RestartSec=5
+MemoryMax=2G
+Nice=5
+
+[Install]
+WantedBy=default.target
